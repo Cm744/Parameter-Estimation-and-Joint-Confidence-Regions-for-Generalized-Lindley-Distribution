@@ -1,0 +1,139 @@
+rgld<-function(n,lambda,alpha){-1-1/lambda-1/lambda*W(-(1+lambda)*exp(-1-lambda)*(1-runif(n)^(1/alpha)),branch=-1)}
+
+
+ 
+T1<-function(x,lambda)
+{lambda<-lambda
+x<-sort(x)
+y<-log(1-exp(-lambda*x)*(lambda*x+lambda+1)/(lambda+1))
+n<-length(x)
+ss<-(sum(y)/(n*y[n])-1)/(n-1)
+return(ss)
+}
+
+T3<-function(x,lambda)
+{lambda<-lambda
+x<-sort(x)
+y<-log(1-exp(-lambda*x)*(lambda*x+lambda+1)/(lambda+1))
+n<-length(x)
+ss<-0
+for (i in 1:(n-1)){ss<-ss+log(sum(y)/(sum(y[n:(n-i+1)])+(n-i)*y[n-i+1]))}
+return(2*ss)
+}
+
+
+gamma=0.05
+
+
+
+lambda1L<-function(x){
+x<-x
+lam<-uniroot(function(lambda){T1(x,lambda)-qf((1-sqrt(1-gamma))/2,2*n-2,2)},c(0.01,0.1),extendInt="up")$root
+return(lam)
+}
+
+lambda1U<-function(x){
+x<-x
+lam<-uniroot(function(lambda){T1(x,lambda)-qf((1+sqrt(1-gamma))/2,2*n-2,2)},c(0.01,0.1),extendInt="up")$root
+return(lam)
+}
+
+alpha1L<-function(x,lambda){qchisq((1-sqrt(1-gamma))/2,2*n)/(-2*sum(log(1-exp(-lambda*x)*(lambda*x+lambda+1)/(lambda+1))))}
+alpha1U<-function(x,lambda){qchisq((1+sqrt(1-gamma))/2,2*n)/(-2*sum(log(1-exp(-lambda*x)*(lambda*x+lambda+1)/(lambda+1))))}
+
+
+
+lambda2L<-function(x){
+x<-x
+lam<-uniroot(function(lambda){T3(x,lambda)-qchisq((1-sqrt(1-gamma))/2,2*n-2)},c(0.01,0.2),extendInt="up")$root
+return(lam)
+}
+
+lambda2U<-function(x){
+x<-x
+lam<-uniroot(function(lambda){T3(x,lambda)-qchisq((1+sqrt(1-gamma))/2,2*n-2)},c(0.01,0.2),extendInt="up")$root
+return(lam)
+}
+
+alpha2L<-function(x,lambda){qchisq((1-sqrt(1-gamma))/2,2*n)/(-2*sum(log(1-exp(-lambda*x)*(lambda*x+lambda+1)/(lambda+1))))}
+alpha2U<-function(x,lambda){qchisq((1+sqrt(1-gamma))/2,2*n)/(-2*sum(log(1-exp(-lambda*x)*(lambda*x+lambda+1)/(lambda+1))))}
+
+ 
+alphaL<-function(x){qchisq((1-sqrt(1-gamma))/2,2*n)/(-2*sum(log(1-exp(-2*x)*(2*x+2+1)/(2+1))))}
+alphaU<-function(x){qchisq((1+sqrt(1-gamma))/2,2*n)/(-2*sum(log(1-exp(-2*x)*(2*x+2+1)/(2+1))))}
+
+## alpha values
+aa = c( 2.0,2.5,3.0,3.5,4.0)
+
+n= 100
+
+## Number of simulation replications.
+nrep = 1000
+
+CP1 = NULL
+Area1 = NULL
+
+CP2 = NULL
+Area2 = NULL
+
+
+
+
+ 
+for (k in 1:5) {
+ 
+alpha = aa[k]
+ 
+X = rgld(nrep*n, lambda=2,alpha=alpha)
+X = array(X, c(nrep,n))
+
+
+ 
+LB1<-apply(X, 1, lambda1L)
+UB1<-apply(X, 1, lambda1U)
+LB2<-apply(X, 1, lambda2L)
+UB2<-apply(X, 1, lambda2U)
+
+
+ci1 = ((apply(X, 1, lambda1L) < 2) & (apply(X, 1, lambda1U) > 2)&(apply(X, 1, alphaL) < alpha)&(apply(X, 1, alphaU)> alpha))
+ci2 = ((apply(X, 1, lambda2L) < 2) & (apply(X, 1, lambda2U) > 2)&(apply(X, 1, alphaL) < alpha)&(apply(X, 1, alphaU)> alpha))
+
+## Calculate the proportion of intervals that cover.
+CP1[k] = mean(ci1)
+CP2[k] = mean(ci2)
+
+
+jifen1<-rep(0,nrep)
+jifen2<-rep(0,nrep)
+
+for (sim in 1:nrep){
+maa<-function(lambda){alpha1U(X[sim,],lambda)-alpha1L(X[sim,],lambda)}
+mbb<-function(lambda){alpha2U(X[sim,],lambda)-alpha2L(X[sim,],lambda)}
+jifen1[sim]<-integrate(Vectorize(maa,"lambda"),lower=LB1[sim],upper=UB1[sim])$value
+jifen2[sim]<-integrate(Vectorize(mbb,"lambda"),lower=LB2[sim],upper=UB2[sim])$value
+}
+Area1[k]=mean(jifen1)
+Area2[k]=mean(jifen2)
+
+
+}
+
+ CP1
+CP2
+
+ 
+e<-c(rep("&",4),"\\")
+out<-data.frame(rbind(paste(round(Area1,4),e,collapse=""),paste(round(CP1,4),e,collapse=""),paste(round(Area2,4),e,collapse=""),paste(round(CP2,4),e,collapse="")))
+ 
+out <- as.matrix(out)
+rownames(out) <- rep("", nrow(out))
+out
+
+ n
+
+ 
+
+
+
+
+

@@ -1,0 +1,7 @@
+K<-function(alpha, lambda, n){
+f<-function(x){x^n*(1+x)*(1-(1+lambda*lambda*x)*exp(-lambda*x)/(1+lambda))^(alpha-1)*exp(-lambda*x)}
+return(integrate(f,lower=0,upper=Inf)$val)
+}
+
+
+ 

@@ -1,0 +1,105 @@
+rgld<-function(n,lambda,alpha){-1-1/lambda-1/lambda*W(-(1+lambda)*exp(-1-lambda)*(1-runif(n)^(1/alpha)),branch=-1)}
+
+glambda<-function(x,lambda){length(x)*(lambda+2)/(lambda*(lambda+1))-sum(x)+(length(x)/sum(log(1-exp(-lambda*x)*(lambda*x+lambda+1)/(lambda+1)))+1)*sum(lambda*x*((lambda+1)*x+lambda+2)/((lambda+1)*((lambda+1)*(1-exp(lambda*x))+lambda*x)))}
+
+glambda2<-function(x,lambda)
+{lambda<-lambda
+x<-sort(x)
+y<-log(1-exp(-lambda*x)*(lambda*x+lambda+1)/(lambda+1))
+n<-length(x)
+ss<-0
+for (i in 1:(n-1)){ss<-ss+log(sum(y)/(sum(y[n:(n-i+1)])+(n-i)*y[n-i+1]))}
+return(ss)
+}
+
+
+###calculate alpha
+
+mle<-function(x){
+x<-x
+lam<-uniroot(function(lambda){glambda(x,lambda)},c(0.01,5))$root
+return(-length(x)/sum(log(1-exp(-lam*x)*(lam*x+lam+1)/(lam+1))))
+}
+
+ime1<-function(x){
+x<-x
+lam<-uniroot(function(lambda){glambda2(x,lambda)-(n-1)},c(0.01,5)  )$root
+return(-length(x)/sum(log(1-exp(-lam*x)*(lam*x+lam+1)/(lam+1))))
+}
+
+ime2<-function(x){
+x<-x
+lam<-uniroot(function(lambda){glambda2(x,lambda)-(n-2)},c(0.01,5) )$root
+return(-length(x)/sum(log(1-exp(-lam*x)*(lam*x+lam+1)/(lam+1))))
+}
+
+
+
+## alpha values
+aa = c(2.0,2.5,3.0,3.5,4.0)
+
+n= 100
+
+## Number of simulation replications.
+nrep = 1000
+
+bias = NULL
+MSE = NULL
+bias2 = NULL
+MSE2 = NULL
+bias3 = NULL
+MSE3 = NULL
+
+
+
+
+
+## Loop over the sample sizes.
+for (k in 1:5) {
+## The sample size for this iteration.
+alpha = aa[k]
+## Generate data from the X population.
+X = rgld(nrep*n, lambda=2,alpha=alpha)
+X = array(X, c(nrep,n))
+
+
+ 
+Xbar = apply(X, 1, mle)
+R = Xbar/alpha
+## Calculate bias, variance, and MSE.
+bias[k] = mean(R)  
+MSE[k] = mean( (R-1)^2 )
+
+ 
+Xbar2 = apply(X, 1, ime1)
+R2 = Xbar2/alpha
+## Calculate bias, variance, and MSE.
+bias2[k] = mean(R2)  
+MSE2[k] = mean( (R2-1)^2 )
+
+ 
+Xbar3 = apply(X, 1, ime2)
+R3 = Xbar3/alpha
+## Calculate bias, variance, and MSE.
+bias3[k] = mean(R3)  
+MSE3[k] = mean( (R3-1)^2 )
+
+
+}
+
+
+
+c<-rep("(",4)
+d<-rep(")",4)
+e<-rep("&",4)
+rbind(paste(round(bias,4),c,round(MSE,4),d,e,collapse=""),paste(round(bias2,4),c,round(MSE2,4),d,e,collapse=""),paste(round(bias3,4),c,round(MSE3,4),d,e,collapse=""))
+
+  
+
+ 
+
+
+
+
+
+

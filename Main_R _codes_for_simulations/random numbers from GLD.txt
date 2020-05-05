@@ -1,0 +1,17 @@
+####LambertW package 
+
+rgld<-function(n,lambda,alpha){-1-1/lambda-1/lambda*W(-(1+lambda)*exp(-1-lambda)*(1-runif(n)^(1/alpha)),branch=-1)}
+
+
+rgldplot<-function(n,lambda,alpha){
+x = seq(0,5,0.001)
+
+truth=alpha*lambda^2*(x+1)*exp(-lambda*x)/(lambda+1)*(1-exp(-lambda*x)*(lambda+lambda*x+1)/(lambda+1))^(alpha-1)
+plot(density(rgld(n,lambda,alpha)),main="Density Estimate of the GLD Model",xlim=c(0,5),ylim=c(0,2),lwd=3)
+lines(x,truth,col="red",lwd=2)
+
+legend("topright",c("True Density","Estimated Density"),col=c("red","black"),lwd=3)
+
+}
+rgldplot(1000,3,2)
+
